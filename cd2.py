@@ -30,7 +30,7 @@ def save_data(df, sheet_name):
     worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 # ================= 2. GIAO DIỆN & ADMIN =================
-st.set_page_config(page_title="Quản lý Điểm Công Đoàn", layout="wide")
+st.set_page_config(page_title="diem_cong_doan", layout="wide")
 st.title("🎯 Ứng dụng Chấm Điểm Công Đoàn (Cloud)")
 
 if "is_admin" not in st.session_state:
