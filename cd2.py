@@ -25,7 +25,7 @@ def load_data(sheet_name):
 
 def save_data(df, sheet_name):
     # 1. Kết nối tới worksheet
-    spreadsheet = client.open("Tên_File_Google_Sheet_Của_Bạn")
+    spreadsheet = client.open("diem_cong_doan")
     worksheet = spreadsheet.worksheet(sheet_name)
     
     # 2. Xử lý lỗi JSON serializable (Giải pháp cho lỗi của bạn)
