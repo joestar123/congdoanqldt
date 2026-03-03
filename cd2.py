@@ -129,7 +129,11 @@ if menu == "🏆 Bảng Xếp Hạng":
         tong_diem = filtered_df.groupby("Thành viên")["Số điểm"].sum().reset_index()
         bxh = pd.merge(df_thanhvien, tong_diem, left_on="Tên Thành viên", right_on="Thành viên", how="left")
         bxh["Số điểm"] = bxh["Số điểm"].fillna(0)
-        st.dataframe(bxh[["Tên Thành viên", "Số điểm"]].sort_values("Số điểm", ascending=False), use_container_width=True)
+        st.dataframe(
+    bxh[["Tên Thành viên", "Số điểm"]].sort_values("Số điểm", ascending=False), 
+    use_container_width=True, 
+    hide_index=True # Phải nằm trong ngoặc như thế này nhé
+)
     else:
         st.info("Chưa có dữ liệu.")
 
