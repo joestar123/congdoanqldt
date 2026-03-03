@@ -10,8 +10,10 @@ import numpy as np
 SHEET_NAME = "diem_cong_doan" 
 
 def get_gspread_client():
-    creds_info = st.secrets["gcp_service_account"]
-    # Fix lỗi định dạng private_key khi chạy trên Streamlit Cloud
+    # .to_dict() giúp tạo ra một bản sao có thể chỉnh sửa được
+    creds_info = st.secrets["gcp_service_account"].to_dict()
+    
+    # Bây giờ bạn có thể sửa private_key thoải mái
     if "private_key" in creds_info:
         creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
     
