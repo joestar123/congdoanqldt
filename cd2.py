@@ -5,7 +5,6 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 
 # ================= 1. CẤU HÌNH KẾT NỐI =================
-# ĐÃ SỬA: Khớp chính xác với tên file trên Google Drive của bạn
 SHEET_NAME = "diem_cong_doan" 
 
 def get_gspread_client():
@@ -110,17 +109,42 @@ with tab2:
     if st.session_state.is_admin:
         st.divider()
         st.subheader("➕ Thêm Sự Kiện")
-        with st.form("add_sk"):
+        with st.form("add_sk", clear_on_submit=True):
             c1, c2 = st.columns(2)
             ten = c1.text_input("Tên sự kiện")
             diadiem = c1.text_input("Địa điểm")
             ngay = c2.date_input("Ngày")
             gio = c2.time_input("Giờ")
             diem = c2.number_input("Điểm", min_value=1, value=5)
-            if st.form_submit_button("Lưu"):
-                new_sk = pd.DataFrame({"Tên sự kiện": [ten], "Ngày diễn ra": [ngay.strftime("%Y-%m-%d")], 
-                                       "Thời gian bắt đầu": [gio.strftime("%H:%M")], "Địa điểm": [diadiem], "Số điểm": [diem]})
-                save_data(pd.concat([df_sukien, new_sk], ignore_index=True), "Sự kiện")
+            if st.form_submit_button("Lưu sự kiện"):
+                new_sk = pd.DataFrame({
+                    "Tên sự kiện": [ten], 
+                    "Ngày diễn ra": [ngay.strftime("%Y-%m-%d")], 
+                    "Thời gian bắt đầu": [gio.strftime("%H:%M")], 
+                    "Địa điểm": [diadiem], 
+                    "Số điểm": [diem]
+                })
+                df_sukien = pd.concat([df_sukien, new_sk], ignore_index=True)
+                save_data(df_sukien, "Sự kiện")
+                st.success("Đã thêm sự kiện!")
+                st.rerun()
+
+        st.divider()
+        st.subheader("🗑️ Xóa Sự Kiện")
+        if not df_sukien.empty:
+            danh_sach_sk = df_sukien["Tên sự kiện"].tolist()
+            sk_xoa = st.selectbox("Chọn sự kiện để xóa:", danh_sach_sk)
+            if st.button("Xác nhận xóa sự kiện", type="primary"):
+                # Xóa khỏi danh sách sự kiện
+                df_sukien = df_sukien[df_sukien["Tên sự kiện"] != sk_xoa]
+                save_data(df_sukien, "Sự kiện")
+                
+                # Xóa các dòng nhật ký liên quan để sạch dữ liệu
+                if not df_nhatky.empty:
+                    df_nhatky = df_nhatky[df_nhatky["Tên sự kiện"] != sk_xoa]
+                    save_data(df_nhatky, "Nhật ký")
+                
+                st.success(f"Đã xóa sự kiện: {sk_xoa}")
                 st.rerun()
 
 # ================= TAB 3: ĐIỂM DANH =================
@@ -137,7 +161,11 @@ with tab3:
             if st.button("Cập nhật điểm danh"):
                 df_nk_new = df_nhatky[df_nhatky["Tên sự kiện"] != sel_sk] if not df_nhatky.empty else pd.DataFrame()
                 if chon_tv:
-                    new_logs = pd.DataFrame({"Tên sự kiện": [sel_sk]*len(chon_tv), "Thành viên": chon_tv, "Số điểm": [info["Số điểm"]]*len(chon_tv)})
+                    new_logs = pd.DataFrame({
+                        "Tên sự kiện": [sel_sk]*len(chon_tv), 
+                        "Thành viên": chon_tv, 
+                        "Số điểm": [info["Số điểm"]]*len(chon_tv)
+                    })
                     df_nk_new = pd.concat([df_nk_new, new_logs], ignore_index=True)
                 save_data(df_nk_new, "Nhật ký")
                 st.success("Đã lưu!")
