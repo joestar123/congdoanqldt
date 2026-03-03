@@ -24,10 +24,25 @@ def load_data(sheet_name):
         return pd.DataFrame()
 
 def save_data(df, sheet_name):
-    worksheet = sh.worksheet(sheet_name)
-    worksheet.clear()
-    # Chuyển DataFrame thành list để update, bao gồm cả header
-    worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+    # 1. Kết nối tới worksheet
+    spreadsheet = client.open("Tên_File_Google_Sheet_Của_Bạn")
+    worksheet = spreadsheet.worksheet(sheet_name)
+    
+    # 2. Xử lý lỗi JSON serializable (Giải pháp cho lỗi của bạn)
+    # Chuyển đổi toàn bộ DataFrame thành kiểu dữ liệu Python thuần túy (String, Int, Float)
+    # Chúng ta xử lý các giá trị NaN và chuyển các kiểu NumPy/Pandas về chuẩn
+    df_to_save = df.copy()
+    
+    # Chuyển đổi Timestamp/Datetime thành string
+    for col in df_to_save.select_dtypes(include=['datetime', 'datetimetz']).columns:
+        df_to_save[col] = df_to_save[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Chuyển mọi thứ còn lại về list các giá trị thuần túy
+    data_list = [df_to_save.columns.values.tolist()] + df_to_save.fillna("").values.tolist()
+    
+    # 3. Cập nhật lên Google Sheets
+    worksheet.clear() # Xóa dữ liệu cũ trước khi ghi mới nếu bạn muốn làm sạch sheet
+    worksheet.update(data_list)
 
 # ================= 2. GIAO DIỆN & ADMIN =================
 st.set_page_config(page_title="Quản lý Công Đoàn", layout="wide")
