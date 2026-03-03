@@ -5,7 +5,8 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 
 # ================= 1. CẤU HÌNH KẾT NỐI =================
-SHEET_NAME = "Quản lý Điểm Công Đoàn" 
+# ĐÃ SỬA: Khớp chính xác với tên file trên Google Drive của bạn
+SHEET_NAME = "diem_cong_doan" 
 
 def get_gspread_client():
     creds_info = st.secrets["gcp_service_account"]
@@ -30,7 +31,7 @@ def save_data(df, sheet_name):
     worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 # ================= 2. GIAO DIỆN & ADMIN =================
-st.set_page_config(page_title="diem_cong_doan", layout="wide")
+st.set_page_config(page_title="Quản lý Công Đoàn", layout="wide")
 st.title("🎯 Ứng dụng Chấm Điểm Công Đoàn (Cloud)")
 
 if "is_admin" not in st.session_state:
@@ -62,7 +63,7 @@ if not df_sukien.empty:
 
 tab1, tab2, tab3 = st.tabs(["🏆 Bảng Xếp Hạng", "📅 Quản lý Sự Kiện", "✅ Điểm Danh"])
 
-# ================= TAB 1: BẢNG XẾP HẠNG (Full Lọc) =================
+# ================= TAB 1: BẢNG XẾP HẠNG =================
 with tab1:
     st.header("Bảng Xếp Hạng Điểm Tích Lũy")
     if not df_nhatky.empty and not df_sukien.empty:
@@ -98,7 +99,7 @@ with tab1:
     else:
         st.info("Chưa có dữ liệu.")
 
-# ================= TAB 2: QUẢN LÝ SỰ KIỆN (Full Thêm/Xóa) =================
+# ================= TAB 2: QUẢN LÝ SỰ KIỆN =================
 with tab2:
     st.header("Danh Sách Sự Kiện")
     if not df_sukien.empty:
@@ -122,23 +123,12 @@ with tab2:
                 save_data(pd.concat([df_sukien, new_sk], ignore_index=True), "Sự kiện")
                 st.rerun()
 
-        st.subheader("🗑️ Xóa Sự Kiện")
-        if not df_sukien.empty:
-            sk_xoa = st.selectbox("Chọn sự kiện để xóa:", df_sukien["Tên sự kiện"].tolist())
-            if st.button("Xác nhận xóa", type="primary"):
-                save_data(df_sukien[df_sukien["Tên sự kiện"] != sk_xoa], "Sự kiện")
-                if not df_nhatky.empty:
-                    save_data(df_nhatky[df_nhatky["Tên sự kiện"] != sk_xoa], "Nhật ký")
-                st.rerun()
-
-# ================= TAB 3: ĐIỂM DANH (Full Chi Tiết) =================
+# ================= TAB 3: ĐIỂM DANH =================
 with tab3:
     if not df_sukien.empty:
         sk_list = df_sukien["Tên sự kiện"].tolist()[::-1]
         sel_sk = st.selectbox("📌 Chọn sự kiện:", sk_list)
-        
         info = df_sukien[df_sukien["Tên sự kiện"] == sel_sk].iloc[0]
-        st.info(f"📅 {info['Ngày diễn ra'].date()} | ⏰ {info['Thời gian bắt đầu']} | 📍 {info['Địa điểm']} | 🏆 {info['Số điểm']} điểm")
         
         da_den = df_nhatky[df_nhatky["Tên sự kiện"] == sel_sk]["Thành viên"].tolist() if not df_nhatky.empty else []
         
