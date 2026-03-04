@@ -128,7 +128,7 @@ if menu == "🏆 Bảng Xếp Hạng":
 
         tong_diem = filtered_df.groupby("Thành viên")["Số điểm"].sum().reset_index()
         bxh = pd.merge(df_thanhvien, tong_diem, left_on="Tên Thành viên", right_on="Thành viên", how="left")
-        bxh["Số điểm"] = bxh["Số điểm"].fillna(0)
+        bxh["Số điểm"] = bxh["Số điểm"].fillna(0).astype(int)
         
         # Sắp xếp và reset index để đánh số thứ tự chuẩn xác cho Top 3
         df_hien_thi = bxh[["Tên Thành viên", "Số điểm"]].sort_values("Số điểm", ascending=False).reset_index(drop=True)
