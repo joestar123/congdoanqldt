@@ -65,13 +65,13 @@ def save_data(df, sheet_name):
 # ================= 2. GIAO DIỆN & ĐIỀU HƯỚNG =================
 st.set_page_config(page_title="Quản lý Công Đoàn", layout="wide")
 
-# 🟢 GIẢI PHÁP: Dùng Sidebar để điều hướng thay vì st.tabs
+# Dùng Sidebar để điều hướng
 with st.sidebar:
     st.title("📌 Menu Chính")
     menu = st.radio(
         "Chọn chức năng:",
         ["🏆 Bảng Xếp Hạng", "📅 Quản lý Sự Kiện", "✅ Điểm Danh"],
-        index=0 # Mặc định là trang đầu
+        index=0 
     )
     
     st.divider()
@@ -129,11 +129,28 @@ if menu == "🏆 Bảng Xếp Hạng":
         tong_diem = filtered_df.groupby("Thành viên")["Số điểm"].sum().reset_index()
         bxh = pd.merge(df_thanhvien, tong_diem, left_on="Tên Thành viên", right_on="Thành viên", how="left")
         bxh["Số điểm"] = bxh["Số điểm"].fillna(0)
+        
+        # Sắp xếp và reset index để đánh số thứ tự chuẩn xác cho Top 3
+        df_hien_thi = bxh[["Tên Thành viên", "Số điểm"]].sort_values("Số điểm", ascending=False).reset_index(drop=True)
+        
+        # Hàm tô màu Top 3
+        def highlight_top3(row):
+            if row.name == 0:
+                return ['background-color: #FFD700; color: black; font-weight: bold'] * len(row) # Vàng
+            elif row.name == 1:
+                return ['background-color: #E0E0E0; color: black; font-weight: bold'] * len(row) # Bạc
+            elif row.name == 2:
+                return ['background-color: #CD7F32; color: black; font-weight: bold'] * len(row) # Đồng
+            return [''] * len(row)
+
+        # Áp dụng màu nền cho Top 3 và căn giữa cột Số điểm
+        df_styled = df_hien_thi.style.apply(highlight_top3, axis=1).set_properties(subset=["Số điểm"], **{"text-align": "center"})
+        
         st.dataframe(
-    bxh[["Tên Thành viên", "Số điểm"]].sort_values("Số điểm", ascending=False), 
-    use_container_width=True, 
-    hide_index=True # Phải nằm trong ngoặc như thế này nhé
-)
+            df_styled, 
+            use_container_width=True, 
+            hide_index=True 
+        )
     else:
         st.info("Chưa có dữ liệu.")
 
@@ -141,7 +158,13 @@ elif menu == "📅 Quản lý Sự Kiện":
     if not df_sukien.empty:
         df_disp = df_sukien.copy()
         df_disp['Ngày diễn ra'] = df_disp['Ngày diễn ra'].dt.strftime('%d/%m/%Y')
-        st.dataframe(df_disp, use_container_width=True)
+        
+        # Căn giữa cột số điểm cho phần sự kiện
+        if "Số điểm" in df_disp.columns:
+            df_styled_sukien = df_disp.style.set_properties(subset=["Số điểm"], **{"text-align": "center"})
+            st.dataframe(df_styled_sukien, use_container_width=True, hide_index=True)
+        else:
+            st.dataframe(df_disp, use_container_width=True, hide_index=True)
     
     if st.session_state.is_admin:
         with st.expander("➕ Thêm sự kiện mới"):
