@@ -107,9 +107,7 @@ st.title(f"🎯 {menu}")
 # ================= HIỂN THỊ NỘI DUNG THEO MENU =================
 
 if menu == "🏆 Bảng Xếp Hạng":
-    # Kiểm tra xem có cột ID Sự kiện chưa để tránh lỗi
     if not df_nhatky.empty and not df_sukien.empty and "ID Sự kiện" in df_sukien.columns and "ID Sự kiện" in df_nhatky.columns:
-        # Merge dựa trên ID Sự kiện thay vì Tên sự kiện
         df_merged = pd.merge(df_nhatky, df_sukien[["ID Sự kiện", "Tên sự kiện", "Ngày diễn ra"]], on="ID Sự kiện", how="left")
         df_merged['Ngày diễn ra'] = pd.to_datetime(df_merged['Ngày diễn ra'])
         df_merged = df_merged.dropna(subset=['Ngày diễn ra'])
@@ -148,14 +146,13 @@ if menu == "🏆 Bảng Xếp Hạng":
         
         st.dataframe(df_styled, use_container_width=True, hide_index=True)
     else:
-        st.info("Chưa có dữ liệu hoặc bạn chưa thêm cột 'ID Sự kiện' vào Google Sheets.")
+        st.info("Chưa có dữ liệu hoặc bạn chưa xóa dữ liệu cũ/thêm cột 'ID Sự kiện' vào Google Sheets.")
 
 elif menu == "📅 Quản lý Sự Kiện":
     if not df_sukien.empty:
         df_disp = df_sukien.copy()
         df_disp['Ngày diễn ra'] = df_disp['Ngày diễn ra'].dt.strftime('%d/%m/%Y')
         
-        # Ẩn cột ID Sự kiện khi hiển thị cho người dùng xem cho đẹp
         cols_to_show = [col for col in df_disp.columns if col != "ID Sự kiện"]
         df_show = df_disp[cols_to_show]
         
@@ -175,7 +172,6 @@ elif menu == "📅 Quản lý Sự Kiện":
                 gio = c2.time_input("Giờ")
                 diem = c2.number_input("Điểm", min_value=1, value=5)
                 if st.form_submit_button("Lưu"):
-                    # Tự động tạo ID Sự kiện duy nhất theo thời gian thực
                     vn_tz = timezone(timedelta(hours=7))
                     unique_id = f"SK_{datetime.now(vn_tz).strftime('%Y%m%d_%H%M%S')}"
                     
@@ -194,14 +190,12 @@ elif menu == "📅 Quản lý Sự Kiện":
 
         with st.expander("🗑️ Xóa sự kiện"):
             if not df_sukien.empty and "ID Sự kiện" in df_sukien.columns:
-                # Hàm định dạng hiển thị tên sự kiện
                 def format_sk_xoa(sk_id):
                     row = df_sukien[df_sukien["ID Sự kiện"] == sk_id].iloc[0]
-                    ngay = row["Ngày diễn ra"].strftime('%d/%m/%Y') if pd.notna(row["Ngày diễn ra"]) else ""
-                    gio = str(row.get("Thời gian bắt đầu", ""))
-                    return f"{row['Tên sự kiện']} ({ngay} - {gio})"
+                    ngay_str = row["Ngày diễn ra"].strftime('%d/%m/%Y') if pd.notna(row["Ngày diễn ra"]) else ""
+                    gio_str = str(row.get("Thời gian bắt đầu", ""))
+                    return f"{row['Tên sự kiện']} ({ngay_str} - {gio_str})"
 
-                # Dùng ID Sự kiện làm giá trị ẩn, hiển thị tên bằng format_func
                 danh_sach_id = df_sukien["ID Sự kiện"].tolist()[::-1]
                 sk_xoa_id = st.selectbox("Chọn sự kiện cần xóa:", danh_sach_id, format_func=format_sk_xoa)
                 
@@ -216,43 +210,35 @@ elif menu == "📅 Quản lý Sự Kiện":
                 st.warning("Không có sự kiện để xóa hoặc thiếu cột ID Sự kiện.")
 
 elif menu == "✅ Điểm Danh":
-    elif menu == "✅ Điểm Danh":
     if not df_sukien.empty and "ID Sự kiện" in df_sukien.columns:
         
-        # Hàm định dạng hiển thị tên sự kiện
         def format_sk_diemdanh(sk_id):
             row = df_sukien[df_sukien["ID Sự kiện"] == sk_id].iloc[0]
-            ngay = row["Ngày diễn ra"].strftime('%d/%m/%Y') if pd.notna(row["Ngày diễn ra"]) else ""
-            gio = str(row.get("Thời gian bắt đầu", ""))
-            return f"{row['Tên sự kiện']} ({ngay} - {gio})"
+            ngay_str = row["Ngày diễn ra"].strftime('%d/%m/%Y') if pd.notna(row["Ngày diễn ra"]) else ""
+            gio_str = str(row.get("Thời gian bắt đầu", ""))
+            return f"{row['Tên sự kiện']} ({ngay_str} - {gio_str})"
         
-        # Dùng ID Sự kiện cho Selectbox
         danh_sach_id = df_sukien["ID Sự kiện"].tolist()[::-1]
         sel_sk_id = st.selectbox("📌 Chọn sự kiện:", danh_sach_id, format_func=format_sk_diemdanh)
         
-        # Lấy thông tin sự kiện dựa trên ID
         info = df_sukien[df_sukien["ID Sự kiện"] == sel_sk_id].iloc[0]
         
-        # Lấy danh sách đã điểm danh dựa trên ID
         if not df_nhatky.empty and "ID Sự kiện" in df_nhatky.columns:
             da_den = df_nhatky[df_nhatky["ID Sự kiện"] == sel_sk_id]["Thành viên"].tolist()
         else:
             da_den = []
-            
+        
         if st.session_state.is_admin:
-# ... (Phần code bên dưới giữ nguyên không đổi)
             chon_tv = st.multiselect("✅ Thành viên tham gia:", df_thanhvien["Tên Thành viên"].tolist(), default=da_den)
             if st.button("Cập nhật"):
-                # Tách riêng các lịch sử điểm danh KHÁC sự kiện đang chọn
                 if not df_nhatky.empty and "ID Sự kiện" in df_nhatky.columns:
                     df_nk_other = df_nhatky[df_nhatky["ID Sự kiện"] != sel_sk_id]
                 else:
                     df_nk_other = pd.DataFrame(columns=["ID Sự kiện", "Tên sự kiện", "Thành viên", "Số điểm"])
                 
-                # Tạo data điểm danh mới (lưu kèm ID)
                 new_logs = pd.DataFrame({
                     "ID Sự kiện": [sel_sk_id] * len(chon_tv),
-                    "Tên sự kiện": [info["Tên sự kiện"]] * len(chon_tv), # Vẫn lưu tên để dễ nhìn trong Google Sheet
+                    "Tên sự kiện": [info["Tên sự kiện"]] * len(chon_tv), 
                     "Thành viên": chon_tv, 
                     "Số điểm": [info["Số điểm"]] * len(chon_tv)
                 })
