@@ -194,18 +194,19 @@ elif menu == "📅 Quản lý Sự Kiện":
 
         with st.expander("🗑️ Xóa sự kiện"):
             if not df_sukien.empty and "ID Sự kiện" in df_sukien.columns:
-                # Tạo chuỗi hiển thị dễ nhìn cho Admin chọn (Tên + Ngày)
-                df_sukien["HienThi"] = df_sukien["Tên sự kiện"] + " (" + df_sukien["Ngày diễn ra"].dt.strftime('%d/%m/%Y').fillna("") + ")"
-                
-                # Tạo dictionary để map từ Chuỗi hiển thị -> ID Sự kiện
-                sk_dict = dict(zip(df_sukien["HienThi"], df_sukien["ID Sự kiện"]))
-                
-                sk_xoa_hien_thi = st.selectbox("Chọn sự kiện cần xóa:", list(sk_dict.keys()))
+                # Hàm định dạng hiển thị tên sự kiện
+                def format_sk_xoa(sk_id):
+                    row = df_sukien[df_sukien["ID Sự kiện"] == sk_id].iloc[0]
+                    ngay = row["Ngày diễn ra"].strftime('%d/%m/%Y') if pd.notna(row["Ngày diễn ra"]) else ""
+                    gio = str(row.get("Thời gian bắt đầu", ""))
+                    return f"{row['Tên sự kiện']} ({ngay} - {gio})"
+
+                # Dùng ID Sự kiện làm giá trị ẩn, hiển thị tên bằng format_func
+                danh_sach_id = df_sukien["ID Sự kiện"].tolist()[::-1]
+                sk_xoa_id = st.selectbox("Chọn sự kiện cần xóa:", danh_sach_id, format_func=format_sk_xoa)
                 
                 if st.button("Xác nhận xóa"):
-                    sk_xoa_id = sk_dict[sk_xoa_hien_thi]
-                    # Xóa theo ID Sự kiện
-                    save_data(df_sukien[df_sukien["ID Sự kiện"] != sk_xoa_id].drop(columns=["HienThi"], errors="ignore"), "Sự kiện")
+                    save_data(df_sukien[df_sukien["ID Sự kiện"] != sk_xoa_id], "Sự kiện")
                     if not df_nhatky.empty and "ID Sự kiện" in df_nhatky.columns:
                         save_data(df_nhatky[df_nhatky["ID Sự kiện"] != sk_xoa_id], "Nhật ký")
                     st.success("✅ Đã xóa thành công!")
@@ -215,13 +216,19 @@ elif menu == "📅 Quản lý Sự Kiện":
                 st.warning("Không có sự kiện để xóa hoặc thiếu cột ID Sự kiện.")
 
 elif menu == "✅ Điểm Danh":
+    elif menu == "✅ Điểm Danh":
     if not df_sukien.empty and "ID Sự kiện" in df_sukien.columns:
-        # Tạo chuỗi hiển thị để chọn sự kiện không bị nhầm lẫn
-        df_sukien["HienThi"] = df_sukien["Tên sự kiện"] + " (" + df_sukien["Ngày diễn ra"].dt.strftime('%d/%m/%Y').fillna("") + ")"
-        sk_dict = dict(zip(df_sukien["HienThi"], df_sukien["ID Sự kiện"]))
         
-        sel_sk_hienthi = st.selectbox("📌 Chọn sự kiện:", list(sk_dict.keys())[::-1])
-        sel_sk_id = sk_dict[sel_sk_hienthi]
+        # Hàm định dạng hiển thị tên sự kiện
+        def format_sk_diemdanh(sk_id):
+            row = df_sukien[df_sukien["ID Sự kiện"] == sk_id].iloc[0]
+            ngay = row["Ngày diễn ra"].strftime('%d/%m/%Y') if pd.notna(row["Ngày diễn ra"]) else ""
+            gio = str(row.get("Thời gian bắt đầu", ""))
+            return f"{row['Tên sự kiện']} ({ngay} - {gio})"
+        
+        # Dùng ID Sự kiện cho Selectbox
+        danh_sach_id = df_sukien["ID Sự kiện"].tolist()[::-1]
+        sel_sk_id = st.selectbox("📌 Chọn sự kiện:", danh_sach_id, format_func=format_sk_diemdanh)
         
         # Lấy thông tin sự kiện dựa trên ID
         info = df_sukien[df_sukien["ID Sự kiện"] == sel_sk_id].iloc[0]
@@ -231,8 +238,9 @@ elif menu == "✅ Điểm Danh":
             da_den = df_nhatky[df_nhatky["ID Sự kiện"] == sel_sk_id]["Thành viên"].tolist()
         else:
             da_den = []
-        
+            
         if st.session_state.is_admin:
+# ... (Phần code bên dưới giữ nguyên không đổi)
             chon_tv = st.multiselect("✅ Thành viên tham gia:", df_thanhvien["Tên Thành viên"].tolist(), default=da_den)
             if st.button("Cập nhật"):
                 # Tách riêng các lịch sử điểm danh KHÁC sự kiện đang chọn
