@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import numpy as np
 import time
 
@@ -176,7 +176,8 @@ elif menu == "📅 Quản lý Sự Kiện":
                 diem = c2.number_input("Điểm", min_value=1, value=5)
                 if st.form_submit_button("Lưu"):
                     # Tự động tạo ID Sự kiện duy nhất theo thời gian thực
-                    unique_id = f"SK_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    vn_tz = timezone(timedelta(hours=7))
+                    unique_id = f"SK_{datetime.now(vn_tz).strftime('%Y%m%d_%H%M%S')}"
                     
                     new_sk = pd.DataFrame({
                         "ID Sự kiện": [unique_id],
